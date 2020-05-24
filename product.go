@@ -1,4 +1,4 @@
-package data
+package dao
 
 type Product struct {
 	Id      int     `gorm:"type:int(11) NOT NULL AUTO_INCREMENT;PRIMARY_KEY;column:id;"` //自增id
@@ -20,6 +20,9 @@ const (
 	ProductModelDataCacheKeyState = "s"
 )
 
+func (u *Product) MicroName() string {
+	return "p"
+}
 func (u *Product) TableName() string {
 	return "product"
 }
@@ -28,24 +31,19 @@ func (u *Product) DbName() string {
 	return "third"
 }
 
-func (u *Product) GetRealData(dataCacheKey map[string][]DataCacheKey) map[string]interface{} {
-	var i map[string]interface{}
-	return i
+func (u *Product) GetRealData(dataCacheKey map[string][]CacheKey) []RealCacheData {
+	var result []RealCacheData
+	return result
 }
 
-func (u *Product) DbToCache(dbData []map[string]interface{}, beData []map[string]interface{}) []RealCacheData {
-	res := []RealCacheData{}
-	return res
+func (u *Product) DbToCache(md ModelData, ck []CacheKey) RealData {
+	var result RealData
+	return result
 }
 
-func (u *Product) DbToCacheKey(dbData []map[string]interface{}, beData []map[string]interface{}) []DataCacheKey {
-	res := []DataCacheKey{}
-	return res
-}
-
-func (u *Product) GetDataCacheKey() map[string]DataCacheKey {
-	result := make(map[string]DataCacheKey)
-	result[CacheTypeIds] = DataCacheKey{
+func (u *Product) GetDataCacheKey() map[string]CacheKey {
+	result := make(map[string]CacheKey)
+	result[CacheTypeIds] = CacheKey{
 		Key:        CacheTypeIds,
 		CType:      CacheTypeIds,
 		Model:      u,
@@ -53,18 +51,19 @@ func (u *Product) GetDataCacheKey() map[string]DataCacheKey {
 		ResetTime:  0,
 		ResetCount: 0,
 		Version:    1,
-		RelField:   []string{"UserName"},
-		ResetType:  0,
+		RelField:   []string{"Id"},
+		ResetType:  1,
 		ConfigName: u.DbName(),
-		Data:       nil,
 	}
-	result[ProductModelDataCacheKeyState] = DataCacheKey{
+	result[ProductModelDataCacheKeyState] = CacheKey{
 		Key:        ProductModelDataCacheKeyState,
-		CType:      CacheTypeList,
+		CType:      CacheTypeField,
 		LifeTime:   3600 * 24 * 30,
+		Model:      u,
 		ResetTime:  0,
 		ResetCount: 0,
 		Version:    1,
+		ResetType:  1,
 		RelField:   []string{"State"},
 		ConfigName: u.DbName(),
 	}

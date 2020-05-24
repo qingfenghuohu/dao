@@ -1,11 +1,10 @@
-package data
+package dao
 
 import (
 	"database/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
-	"github.com/json-iterator/go"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/qingfenghuohu/config"
 	"github.com/qingfenghuohu/tools"
@@ -16,12 +15,12 @@ import (
 )
 
 type ModelInfo interface {
+	MicroName() string
 	TableName() string
 	DbName() string
-	GetRealData(dataCacheKey map[string][]DataCacheKey) []RealCacheData
-	GetDataCacheKey() map[string]DataCacheKey
-	DbToCache(dbData []map[string]interface{}, beData []map[string]interface{}, operation string) []RealCacheData
-	DbToCacheKey(dbData []map[string]interface{}, beData []map[string]interface{}, operation string) []DataCacheKey
+	GetRealData(dataCacheKey map[string][]CacheKey) []RealCacheData
+	GetDataCacheKey() map[string]CacheKey
+	DbToCache(md ModelData, ck []CacheKey) RealData
 }
 
 type m struct {
@@ -114,7 +113,6 @@ var connS map[string][]*gorm.DB
 var once sync.Once
 
 func init() {
-
 	for dbName, v := range config.Data["database"].(map[string]interface{}) {
 		masterData := v.(map[string]interface{})["master"].(map[string]interface{})
 		slaveData := v.(map[string]interface{})["slave"].(map[string]interface{})
@@ -153,7 +151,6 @@ func init() {
 		}
 		//m.connM.LogMode(true)
 	}
-	fmt.Println("db库计数打印")
 }
 
 func (m *m) connMaster() *gorm.DB {
@@ -212,6 +209,7 @@ func (m *m) Add(data interface{}) int {
 	v := reflect.ValueOf(data).Elem()
 	var id int
 	var mData = make(map[string]interface{})
+	modelData := NewModelData(m.modelInfo, "add")
 	for i := 0; i < t.NumField(); i++ {
 		if typeof(v.Field(i).Interface()) == "int" {
 			mData[t.Field(i).Name] = strconv.Itoa(v.Field(i).Interface().(int))
@@ -219,10 +217,11 @@ func (m *m) Add(data interface{}) int {
 			mData[t.Field(i).Name] = v.Field(i).Interface()
 		}
 	}
+	modelData.SetData(mData, mData)
 	id, _ = strconv.Atoi(mData[m.pk].(string))
 	if id > 0 {
 		result = append(result, mData)
-		SaveCache([]map[string]interface{}{}, result, m.modelInfo)
+		SaveCache(modelData)
 	}
 	return id
 }
@@ -232,11 +231,11 @@ func (m *m) Save(data interface{}) bool {
 	}
 	tmpWhere := m.where
 	beData := m.Select()
-	reData := []map[string]interface{}{}
 	m.where = tmpWhere
 	result := m.connMaster().Model(m.modelInfo).Where(m.where.w, m.where.p...).Updates(data).RowsAffected
 	m.clear()
 	if result > 0 {
+		md := NewModelData(m.modelInfo, "save")
 		mData := Struct2Map(data)
 		for _, v := range beData {
 			tmpData := make(map[string]interface{})
@@ -247,27 +246,26 @@ func (m *m) Save(data interface{}) bool {
 					tmpData[ii] = vv.(string)
 				}
 			}
-			reData = append(reData, tmpData)
+			md.SetData(v, tmpData)
 		}
-		SaveCache(beData, reData, m.modelInfo)
+		SaveCache(md)
 		return true
 	} else {
 		return false
 	}
 }
-func (m *m) IncrSets(field string, number int, field2 string, number2 int) bool {
+func (m *m) Incr(field string, number int, field2 string, number2 int) bool {
 	if m.where.w == "" {
 		panic("条件不能为空")
 	}
 	tmpWhere := m.where
 	beData := m.Select()
-	reData := []map[string]interface{}{}
 	m.where = tmpWhere
 
 	result := m.connMaster().Model(m.modelInfo).Where(m.where.w, m.where.p...).UpdateColumn(field, gorm.Expr(field+" + ?", number), field2, gorm.Expr(field2+" + ?", number2)).RowsAffected
 	m.clear()
-
 	if result > 0 {
+		md := NewModelData(m.modelInfo, "save")
 		for _, v := range beData {
 			tmpData := make(map[string]interface{})
 			for ii, vv := range v {
@@ -279,26 +277,26 @@ func (m *m) IncrSets(field string, number int, field2 string, number2 int) bool 
 					tmpData[ii] = vv.(string)
 				}
 			}
-			reData = append(reData, tmpData)
+			md.SetData(v, tmpData)
 		}
-		SaveCache(beData, reData, m.modelInfo)
+		SaveCache(md)
 		return true
 	} else {
 		return false
 	}
 }
 
-func (m *m) DecrSet(field string, number int) bool {
+func (m *m) Decr(field string, number int) bool {
 	if m.where.w == "" {
 		panic("条件不能为空")
 	}
 	tmpWhere := m.where
 	beData := m.Select()
-	reData := []map[string]interface{}{}
 	m.where = tmpWhere
 	result := m.connMaster().Model(m.modelInfo).Where(m.where.w, m.where.p...).UpdateColumn(field, gorm.Expr(field+" - ?", number)).RowsAffected
 	m.clear()
 	if result > 0 {
+		md := NewModelData(m.modelInfo, "save")
 		for _, v := range beData {
 			tmpData := make(map[string]interface{})
 			for ii, vv := range v {
@@ -308,9 +306,9 @@ func (m *m) DecrSet(field string, number int) bool {
 					tmpData[ii] = vv.(string)
 				}
 			}
-			reData = append(reData, tmpData)
+			md.SetData(v, tmpData)
 		}
-		SaveCache(beData, reData, m.modelInfo)
+		SaveCache(md)
 		return true
 	} else {
 		return false
@@ -323,7 +321,11 @@ func (m *m) Del() bool {
 	result := m.connMaster().Where(m.where.w, m.where.p).Delete(m.modelInfo).RowsAffected
 	m.clear()
 	if result > 0 {
-		DelCache(beData, m.modelInfo)
+		md := NewModelData(m.modelInfo, "del")
+		for _, v := range beData {
+			md.SetData(v, map[string]interface{}{})
+		}
+		SaveCache(md)
 		return true
 	} else {
 		return false
@@ -497,11 +499,13 @@ func typeof(v interface{}) string {
 }
 
 func Struct2Map(m interface{}) map[string]string {
-	var result map[string]string
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-	data, _ := json.Marshal(m)
-	reader := strings.NewReader(string(data))
-	decoder := json.NewDecoder(reader)
-	decoder.Decode(&result)
+	result := map[string]string{}
+	t := reflect.TypeOf(m).Elem()
+	v := reflect.ValueOf(m).Elem()
+	for i := 0; i < t.NumField(); i++ {
+		if !v.Field(i).IsZero() {
+			result[t.Field(i).Name] = v.Field(i).String()
+		}
+	}
 	return result
 }
