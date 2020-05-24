@@ -110,20 +110,20 @@ func (real *RelReal) DelCacheData(dck []CacheKey) {
 func (real *RelReal) GetCacheKey(key *CacheKey) string {
 	return strconv.Itoa(key.Version) + ":" +
 		key.CType + ":" +
-		key.Model.DbName() + "." + key.Model.TableName() + ":" +
+		key.Model.MicroName() + "." + key.Model.DbName() + "." + key.Model.TableName() + ":" +
 		key.Key + ":" +
 		key.Params[0]
 }
-func (real *RelReal) DbToCache(md ModelData) []RealCacheData {
+func (real *RelReal) DbToCache(md *ModelData) []RealCacheData {
 	var result []RealCacheData
-	ck := GetCache().typeCacheKey(CacheTypeField, md.Model)
+	ck := GetCache().typeCacheKey(CacheTypeRelation, md.Model)
 	mddb := md.Model.DbToCache(md, ck)
+	if len(mddb.DelData) > 0 {
+		real.DelCacheData(RemoveDuplicateCacheKey(mddb.DelData))
+	}
 	if len(mddb.SaveData) > 0 {
 		tmp := real.SetDataCacheKey(RemoveDuplicateCacheKey(mddb.SaveData)).GetRealData()
 		result = append(result, tmp...)
-	}
-	if len(mddb.DelData) > 0 {
-		real.DelCacheData(RemoveDuplicateCacheKey(mddb.DelData))
 	}
 	if len(mddb.Data) > 0 {
 		result = append(result, mddb.Data...)

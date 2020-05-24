@@ -22,7 +22,7 @@ type Cache interface {
 	GetRealData() []RealCacheData
 	SetDataCacheKey(dck []CacheKey) Cache
 	DelCacheData(dck []CacheKey)
-	DbToCache(md ModelData) []RealCacheData
+	DbToCache(md *ModelData) []RealCacheData
 	GetCacheKey(key *CacheKey) string
 }
 
@@ -131,7 +131,7 @@ func RunCache(key string) Cache {
 }
 
 func CreateCacheKey(m ModelInfo, key string, p ...string) CacheKey {
-	result := Model(m).modelInfo.GetDataCacheKey()[key]
+	result := m.GetDataCacheKey()[key]
 	result.Params = p
 	return result
 }
@@ -167,15 +167,15 @@ func SaveCache(md ModelData) {
 }
 
 func DbToTypeCache(md ModelData) map[string][]RealCacheData {
-	result := TypeRealData{}
+	result := newTypeRealData()
 	dataCacheKey := md.Model.GetDataCacheKey()
 	for _, confVal := range dataCacheKey {
 		result.Add()
-		go func(confVal CacheKey, result *TypeRealData, md ModelData) {
+		go func(confVal CacheKey, result *TypeRealData, md *ModelData) {
 			tmp := RunCache(confVal.CType).DbToCache(md)
 			result.append(confVal.CType, tmp...)
 			result.Done()
-		}(confVal, &result, md)
+		}(confVal, &result, &md)
 	}
 	result.Wait()
 	return result.Data
@@ -244,7 +244,9 @@ func (rd *TypeRealData) Done() {
 func (rd *TypeRealData) Wait() {
 	rd.WaitGroup.Wait()
 }
-
+func newTypeRealData() TypeRealData {
+	return TypeRealData{Data: map[string][]RealCacheData{}}
+}
 func GetCache() *ListCacheKey {
 	result := ListCacheKey{}
 	return &result

@@ -1,6 +1,7 @@
 package dao
 
 import (
+	"fmt"
 	"github.com/qingfenghuohu/tools"
 	"strings"
 	"time"
@@ -35,33 +36,29 @@ func (u *UserProduct) DbName() string {
 
 func (u *UserProduct) GetRealData(dataCacheKey map[string][]CacheKey) []RealCacheData {
 	var result []RealCacheData
+	res := map[string]RealCacheData{}
 	for key, val := range dataCacheKey {
 		switch key {
 		case UserProductModelDataCacheKeyIntegral:
 			uid := []string{}
+			for _, v := range val {
+				res[v.String()] = RealCacheData{v.DefaultVal, v}
+			}
 			_, ck := ExistsMulti(val)
 			for _, v := range ck {
-				if !Exists(v) {
-					if v.Params[0] != "" {
-						uid = append(uid, v.Params[0])
-					}
-				} else {
-					rcd := RealCacheData{v.DefaultVal, v}
-					result = append(result, rcd)
+				if v.Params[0] != "" {
+					uid = append(uid, v.Params[0])
 				}
 			}
 			if len(uid) > 0 {
 				uid = tools.RemoveDuplicateElement(uid)
 				wh := strings.Join(uid, ",")
-				res := Model(u).Where("uid in(" + wh + ") and type = 1").Select()
-				for _, v := range res {
-					rcd := RealCacheData{}
-					rcd.CacheKey = CreateCacheKey(u, UserProductModelDataCacheKeyIntegral, v["Uid"].(string), v["Pid"].(string))
-					rcd.Result = v["Val"].(string)
-					result = append(result, rcd)
+				dbdata := Model(u).Where("uid in(" + wh + ") and type = 1").Select()
+				for _, v := range dbdata {
+					k := CreateCacheKey(u, UserProductModelDataCacheKeyIntegral, v["Uid"].(string), v["Pid"].(string))
+					res[k.String()] = RealCacheData{v["Val"].(string), k}
 				}
 			}
-			result = SetRealCacheDataDefault(val, result)
 			break
 		case UserProductModelDataCacheKeyNum:
 			uid := []string{}
@@ -82,46 +79,55 @@ func (u *UserProduct) GetRealData(dataCacheKey map[string][]CacheKey) []RealCach
 			}
 			if len(uid) > 0 {
 				wh := strings.Join(uid, ",")
-				res := Model(u).Where("uid in(" + wh + ") and type = 2").Select()
-				for _, v := range res {
-					rcd := RealCacheData{}
-					rcd.CacheKey = CreateCacheKey(u, UserProductModelDataCacheKeyIntegral, v["Uid"].(string), v["Pid"].(string))
-					rcd.Result = v["Val"].(string)
-					result = append(result, rcd)
+				dbdata := Model(u).Where("uid in(" + wh + ") and type = 2").Select()
+				for _, v := range dbdata {
+					k := CreateCacheKey(u, UserProductModelDataCacheKeyIntegral, v["Uid"].(string), v["Pid"].(string))
+					res[k.String()] = RealCacheData{v["Val"].(string), k}
 				}
 			}
-			result = SetRealCacheDataDefault(val, result)
 			break
 		}
+	}
+	for _, v := range res {
+		result = append(result, v)
 	}
 	return result
 }
 
-func (u *UserProduct) DbToCache(md ModelData, ck []CacheKey) RealData {
+func (u *UserProduct) DbToCache(md *ModelData, ck []CacheKey) RealData {
 	var result RealData
 	for _, val := range md.Data {
-		for _, v := range ck {
-			switch v.Key {
-			case UserProductModelDataCacheKeyIntegral, UserProductModelDataCacheKeyNum:
-				if md.Operation == "del" {
-					v.Params = append(v.Params, val.BeData["Uid"].(string))
-					v.Params = append(v.Params, val.BeData["Pid"].(string))
-					result.DelAppend(v)
-				} else {
-					if val.BeData["Pid"].(string) == val.AfterData["Pid"].(string) {
-						v.Params = []string{}
-						v.Params = append(v.Params, val.BeData["Uid"].(string))
-						v.Params = append(v.Params, val.BeData["Pid"].(string))
-						result.DelAppend(v)
-					}
-					v.Params = []string{}
-					v.Params = append(v.Params, val.AfterData["Uid"].(string))
-					v.Params = append(v.Params, val.AfterData["Pid"].(string))
-					result.Append(RealCacheData{val.AfterData["Values"].(string), v})
-				}
-				break
+		fmt.Println(val)
+		if md.Operation == "del" {
+			if val.BeData["Type"].(string) == "1" {
+				result.DelAppend(CreateCacheKey(md.Model, UserProductModelDataCacheKeyIntegral, val.BeData["Uid"].(string), val.BeData["Pid"].(string)))
 			}
-
+			if val.BeData["Type"].(string) == "2" {
+				result.DelAppend(CreateCacheKey(md.Model, UserProductModelDataCacheKeyNum, val.BeData["Uid"].(string), val.BeData["Pid"].(string)))
+			}
+		} else {
+			if val.BeData["Type"].(string) == "1" {
+				result.DelAppend(CreateCacheKey(md.Model, UserProductModelDataCacheKeyIntegral, val.BeData["Uid"].(string), val.BeData["Pid"].(string)))
+			}
+			if val.BeData["Type"].(string) == "2" {
+				result.DelAppend(CreateCacheKey(md.Model, UserProductModelDataCacheKeyNum, val.BeData["Uid"].(string), val.BeData["Pid"].(string)))
+			}
+			if val.AfterData["Type"].(string) == "1" {
+				key := CreateCacheKey(md.Model, UserProductModelDataCacheKeyIntegral, val.AfterData["Uid"].(string), val.AfterData["Pid"].(string))
+				if Exists(key) {
+					result.Append(RealCacheData{val.AfterData["Val"].(string), key})
+				} else {
+					result.SaveAppend(key)
+				}
+			}
+			if val.AfterData["Type"].(string) == "2" {
+				key := CreateCacheKey(md.Model, UserProductModelDataCacheKeyNum, val.AfterData["Uid"].(string), val.AfterData["Pid"].(string))
+				if Exists(key) {
+					result.Append(RealCacheData{val.AfterData["Val"].(string), key})
+				} else {
+					result.SaveAppend(key)
+				}
+			}
 		}
 	}
 	return result
@@ -139,7 +145,7 @@ func (u *UserProduct) GetDataCacheKey() map[string]CacheKey {
 		Version:    1,
 		RelField:   []string{"Uid", "Pid"},
 		ConfigName: u.DbName(),
-		DefaultVal: nil,
+		DefaultVal: "",
 	}
 	result[UserProductModelDataCacheKeyNum] = CacheKey{
 		Key:        UserProductModelDataCacheKeyNum,
@@ -151,7 +157,7 @@ func (u *UserProduct) GetDataCacheKey() map[string]CacheKey {
 		Version:    1,
 		RelField:   []string{"Uid", "Pid"},
 		ConfigName: u.DbName(),
-		DefaultVal: nil,
+		DefaultVal: "",
 	}
 	return result
 }

@@ -2,7 +2,9 @@ package dao
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/qingfenghuohu/tools/str"
+	"strconv"
 	"sync"
 )
 
@@ -45,14 +47,18 @@ func (r *Result) del(key string) {
 }
 
 func (r *Result) Read(model ModelInfo, key string, params ...string) resultInfo {
-	var result resultInfo
+	result := resultInfo{}
 	k := CreateCacheKey(model, key, params...)
 	res := []map[string]interface{}{}
 	tmp := r.read(k.String())
-	if tmp != nil && typeof(tmp) != "[]map[string]interface {}" {
-		json.Unmarshal([]byte(tmp.(string)), &res)
+	if k.CType == CacheTypeRelation || k.CType == CacheTypeTotal {
+		result.data = tmp
+	} else {
+		if tmp != nil && typeof(tmp) != "[]map[string]interface {}" {
+			json.Unmarshal([]byte(tmp.(string)), &res)
+		}
+		result.data = res
 	}
-	result.data = res
 	return result
 }
 
@@ -85,8 +91,18 @@ func (r resultInfo) String() string {
 }
 
 func (r resultInfo) Int() int {
-	return r.data.(int)
+	var result int
+	if typeof(r.data) == "string" {
+		result, _ = strconv.Atoi(r.data.(string))
+	} else {
+		fmt.Println(r.data)
+		result = r.data.(int)
+	}
+	return result
 }
 func (r resultInfo) Bool() bool {
 	return r.data.(bool)
+}
+func (r resultInfo) Raw() interface{} {
+	return r.data
 }

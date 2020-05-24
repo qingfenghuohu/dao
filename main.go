@@ -20,7 +20,7 @@ type ModelInfo interface {
 	DbName() string
 	GetRealData(dataCacheKey map[string][]CacheKey) []RealCacheData
 	GetDataCacheKey() map[string]CacheKey
-	DbToCache(md ModelData, ck []CacheKey) RealData
+	DbToCache(md *ModelData, ck []CacheKey) RealData
 }
 
 type m struct {
@@ -235,17 +235,19 @@ func (m *m) Save(data interface{}) bool {
 	result := m.connMaster().Model(m.modelInfo).Where(m.where.w, m.where.p...).Updates(data).RowsAffected
 	m.clear()
 	if result > 0 {
+		fmt.Println("data", data)
 		md := NewModelData(m.modelInfo, "save")
 		mData := Struct2Map(data)
 		for _, v := range beData {
 			tmpData := make(map[string]interface{})
 			for ii, vv := range v {
-				if ok := mData[ii]; ok != "" && m.pk != ii {
-					tmpData[ii] = ok
+				if _, ok := mData[ii]; ok && m.pk != ii {
+					tmpData[ii] = mData[ii]
 				} else {
 					tmpData[ii] = vv.(string)
 				}
 			}
+			fmt.Println("tmpData", mData)
 			md.SetData(v, tmpData)
 		}
 		SaveCache(md)
@@ -504,7 +506,11 @@ func Struct2Map(m interface{}) map[string]string {
 	v := reflect.ValueOf(m).Elem()
 	for i := 0; i < t.NumField(); i++ {
 		if !v.Field(i).IsZero() {
-			result[t.Field(i).Name] = v.Field(i).String()
+			if typeof(v.Field(i).Int()) == "int64" || typeof(v.Field(i).Int()) == "int" {
+				result[t.Field(i).Name] = strconv.Itoa(int(v.Field(i).Int()))
+			} else {
+				result[t.Field(i).Name] = v.Field(i).String()
+			}
 		}
 	}
 	return result

@@ -23,7 +23,7 @@ func (real *Real) SetDataCacheKey(dck []CacheKey) Cache {
 func (real *Real) DelCacheData(dck []CacheKey) {
 
 }
-func (real *Real) DbToCache(md ModelData) []RealCacheData {
+func (real *Real) DbToCache(md *ModelData) []RealCacheData {
 	var result []RealCacheData
 	return result
 }

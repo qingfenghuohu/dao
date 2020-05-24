@@ -9,12 +9,24 @@ import (
 
 func TestModel3(t *testing.T) {
 	UserProduct := UserProduct{}
-	result := GetCache().
-		Add(&UserProduct, UserProductModelDataCacheKeyIntegral, "1", "2").
-		Add(&UserProduct, UserProductModelDataCacheKeyIntegral, "1", "3").
-		GetData()
-	res := result.Read(&UserProduct, UserProductModelDataCacheKeyIntegral, "1", "2").Int()
-	fmt.Println(res)
+	Model(&UserProduct).Where("id = 1").Del()
+
+	//UserProduct.Type = 1
+	//UserProduct.Uid = 1
+	//UserProduct.Pid = tools.MtRand(1,10000)
+	//UserProduct.Val = tools.MtRand(100,10000)
+	//Model(&UserProduct).Where("id = 1").Save(&UserProduct)
+
+	//Model(&UserProduct).Add(&UserProduct)
+	//Product := Product{}
+	//result := GetCache().
+	//	Add(&Product, CacheTypeIds, "1").
+	//	Add(&UserProduct, UserProductModelDataCacheKeyIntegral, "1", "2").
+	//	Add(&UserProduct, UserProductModelDataCacheKeyIntegral, "1", "3").
+	//	GetData()
+	//fmt.Println(result.Read(&Product, CacheTypeIds, "1").Map())
+	//res := result.Read(&UserProduct, UserProductModelDataCacheKeyIntegral, "1", "3").Int()
+	//fmt.Println(res)
 }
 func TestModel2(t *testing.T) {
 	//st := "tttttttttttttttttttttttttttfdfdsfdfdvewereqewwqewq"

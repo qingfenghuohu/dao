@@ -19,9 +19,8 @@ func (md ModelData) GetModel() ModelInfo {
 	return md.Model
 }
 
-func (md ModelData) SetData(BeData map[string]interface{}, AfterData map[string]interface{}) {
-	data := RecordData{BeData, AfterData}
-	md.Data = append(md.Data, data)
+func (md *ModelData) SetData(BeData map[string]interface{}, AfterData map[string]interface{}) {
+	md.Data = append(md.Data, RecordData{BeData, AfterData})
 }
 
 func NewModelData(Model ModelInfo, Operation string) ModelData {

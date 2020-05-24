@@ -114,7 +114,7 @@ func (real *IdReal) DelCacheData(dck []CacheKey) {
 		redis.GetInstance(key).Delete(val...)
 	}
 }
-func (real *IdReal) DbToCache(md ModelData) []RealCacheData {
+func (real *IdReal) DbToCache(md *ModelData) []RealCacheData {
 	var result RealData
 	pk := Model(md.Model).InitField().pk
 	for _, val := range md.Data {
