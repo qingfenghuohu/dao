@@ -20,7 +20,7 @@ type ModelInfo interface {
 	DbName() string
 	GetRealData(dataCacheKey map[string][]CacheKey) []RealCacheData
 	GetDataCacheKey() map[string]CacheKey
-	DbToCache(md *ModelData, ck []CacheKey) RealData
+	DbToCache(md *ModelData, t string) RealData
 }
 
 type m struct {

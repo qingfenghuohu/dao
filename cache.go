@@ -2,6 +2,7 @@ package dao
 
 import (
 	"fmt"
+	"github.com/qingfenghuohu/tools"
 	"strconv"
 	"strings"
 	"sync"
@@ -135,7 +136,12 @@ func CreateCacheKey(m ModelInfo, key string, p ...string) CacheKey {
 	result.Params = p
 	return result
 }
-
+func GetCacheKey(m ModelInfo, key string, p ...string) CacheKey {
+	result := m.GetDataCacheKey()[key]
+	result.Params = p
+	result.SetOperation("get")
+	return result
+}
 func GetData(configKey []CacheKey) Result {
 	t := time.Now()
 	configKey = RemoveDuplicateCacheKey(configKey)
@@ -159,7 +165,9 @@ func SaveCache(md ModelData) {
 	for k, v := range data {
 		waitGroup.Add(1)
 		go func(key string, val []RealCacheData, w *sync.WaitGroup) {
-			RunCache(key).SetCacheData(val)
+			if len(val) > 0 {
+				RunCache(key).SetCacheData(val)
+			}
 			w.Done()
 		}(k, v, &waitGroup)
 	}
@@ -169,13 +177,18 @@ func SaveCache(md ModelData) {
 func DbToTypeCache(md ModelData) map[string][]RealCacheData {
 	result := newTypeRealData()
 	dataCacheKey := md.Model.GetDataCacheKey()
-	for _, confVal := range dataCacheKey {
+	CacheKeyType := []string{}
+	for _, val := range dataCacheKey {
+		CacheKeyType = append(CacheKeyType, val.CType)
+	}
+	CacheKeyType = tools.RemoveDuplicateElement(CacheKeyType)
+	for _, val := range CacheKeyType {
 		result.Add()
-		go func(confVal CacheKey, result *TypeRealData, md *ModelData) {
-			tmp := RunCache(confVal.CType).DbToCache(md)
-			result.append(confVal.CType, tmp...)
+		go func(confVal string, result *TypeRealData, md *ModelData) {
+			tmp := RunCache(confVal).DbToCache(md)
+			result.append(confVal, tmp...)
 			result.Done()
-		}(confVal, &result, &md)
+		}(val, &result, &md)
 	}
 	result.Wait()
 	return result.Data

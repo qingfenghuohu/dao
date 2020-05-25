@@ -116,8 +116,7 @@ func (real *RelReal) GetCacheKey(key *CacheKey) string {
 }
 func (real *RelReal) DbToCache(md *ModelData) []RealCacheData {
 	var result []RealCacheData
-	ck := GetCache().typeCacheKey(CacheTypeRelation, md.Model)
-	mddb := md.Model.DbToCache(md, ck)
+	mddb := md.Model.DbToCache(md, CacheTypeRelation)
 	if len(mddb.DelData) > 0 {
 		real.DelCacheData(RemoveDuplicateCacheKey(mddb.DelData))
 	}

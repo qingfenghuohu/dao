@@ -36,7 +36,7 @@ func (u *Product) GetRealData(dataCacheKey map[string][]CacheKey) []RealCacheDat
 	return result
 }
 
-func (u *Product) DbToCache(md *ModelData, ck []CacheKey) RealData {
+func (u *Product) DbToCache(md *ModelData, t string) RealData {
 	var result RealData
 	return result
 }

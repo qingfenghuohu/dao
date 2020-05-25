@@ -2,6 +2,7 @@ package dao
 
 import (
 	"fmt"
+	"github.com/qingfenghuohu/tools"
 	"strconv"
 	"testing"
 	"time"
@@ -9,21 +10,21 @@ import (
 
 func TestModel3(t *testing.T) {
 	UserProduct := UserProduct{}
-	Model(&UserProduct).Where("id = 1").Del()
+	//Model(&UserProduct).Where("id = 1").Del()
 
-	//UserProduct.Type = 1
-	//UserProduct.Uid = 1
-	//UserProduct.Pid = tools.MtRand(1,10000)
-	//UserProduct.Val = tools.MtRand(100,10000)
+	UserProduct.Type = 1
+	UserProduct.Uid = 1
+	UserProduct.Pid = tools.MtRand(1, 10000)
+	UserProduct.Val = tools.MtRand(100, 10000)
 	//Model(&UserProduct).Where("id = 1").Save(&UserProduct)
 
-	//Model(&UserProduct).Add(&UserProduct)
+	Model(&UserProduct).Add(&UserProduct)
 	//Product := Product{}
 	//result := GetCache().
-	//	Add(&Product, CacheTypeIds, "1").
-	//	Add(&UserProduct, UserProductModelDataCacheKeyIntegral, "1", "2").
-	//	Add(&UserProduct, UserProductModelDataCacheKeyIntegral, "1", "3").
-	//	GetData()
+	//Add(&Product, CacheTypeIds, "1").
+	//Add(&UserProduct, UserProductModelDataCacheKeyUidTotal, "1").
+	//Add(&UserProduct, UserProductModelDataCacheKeyIntegral, "1", "3").
+	//GetData()
 	//fmt.Println(result.Read(&Product, CacheTypeIds, "1").Map())
 	//res := result.Read(&UserProduct, UserProductModelDataCacheKeyIntegral, "1", "3").Int()
 	//fmt.Println(res)

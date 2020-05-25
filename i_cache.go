@@ -99,8 +99,7 @@ func (real *IReal) DelCacheData(dck []CacheKey) {
 }
 func (real *IReal) DbToCache(md *ModelData) []RealCacheData {
 	var result []RealCacheData
-	ck := GetCache().typeCacheKey(CacheTypeField, md.Model)
-	mddb := md.Model.DbToCache(md, ck)
+	mddb := md.Model.DbToCache(md, CacheTypeI)
 	if len(mddb.SaveData) > 0 {
 		tmp := real.SetDataCacheKey(RemoveDuplicateCacheKey(mddb.SaveData)).GetRealData()
 		result = append(result, tmp...)

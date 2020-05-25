@@ -2,7 +2,6 @@ package dao
 
 import (
 	"errors"
-	"fmt"
 	"github.com/qingfenghuohu/tools"
 	"github.com/qingfenghuohu/tools/redis"
 	"strconv"
@@ -60,7 +59,6 @@ func ExistsMulti(ck []CacheKey) ([]CacheKey, []CacheKey) {
 			keys[v.ConfigName] = append(keys[v.ConfigName], v.String())
 		}
 	}
-	fmt.Println(keys)
 	for k, v := range keys {
 		vv := tools.RemoveDuplicateElement(v)
 		tmp := redis.GetInstance(k).ExistsMulti(vv)

@@ -1,7 +1,10 @@
 package dao
 
 import (
+	"fmt"
+	"github.com/qingfenghuohu/tools"
 	"github.com/qingfenghuohu/tools/redis"
+	"strconv"
 )
 
 type TotalReal struct {
@@ -16,11 +19,32 @@ func (real *TotalReal) SetCacheData(rcd []RealCacheData) {
 	ReduceData := map[string]map[string]int{}
 	SetData := map[string]map[string]int{}
 	DelData := []CacheKey{}
+	ck := []CacheKey{}
+	var dbresult int
 	for _, v := range rcd {
+		ck = append(ck, v.CacheKey)
+		dbresult, _ = strconv.Atoi(tools.Obj2Str(v.Result))
 		if v.CacheKey.Operation == "del" {
 			DelData = append(DelData, v.CacheKey)
-		}
-		if v.CacheKey.Operation == "get" {
+		} else if v.CacheKey.Operation == "plus" {
+			if len(PlusData[v.CacheKey.ConfigName]) == 0 {
+				PlusData[v.CacheKey.ConfigName] = map[string]int{}
+			}
+			if _, ok := PlusData[v.CacheKey.ConfigName][v.CacheKey.String()]; ok {
+				PlusData[v.CacheKey.ConfigName][v.CacheKey.String()] += dbresult
+			} else {
+				PlusData[v.CacheKey.ConfigName][v.CacheKey.String()] = dbresult
+			}
+		} else if v.CacheKey.Operation == "reduce" {
+			if len(ReduceData[v.CacheKey.ConfigName]) == 0 {
+				ReduceData[v.CacheKey.ConfigName] = map[string]int{}
+			}
+			if _, ok := ReduceData[v.CacheKey.ConfigName][v.CacheKey.String()]; ok {
+				ReduceData[v.CacheKey.ConfigName][v.CacheKey.String()] += dbresult
+			} else {
+				ReduceData[v.CacheKey.ConfigName][v.CacheKey.String()] = dbresult
+			}
+		} else {
 			if len(CacheData[v.CacheKey.ConfigName]) == 0 {
 				CacheData[v.CacheKey.ConfigName] = []interface{}{}
 				Keys[v.CacheKey.ConfigName] = map[int64][]string{}
@@ -32,40 +56,11 @@ func (real *TotalReal) SetCacheData(rcd []RealCacheData) {
 				SetData[v.CacheKey.ConfigName] = map[string]int{}
 			}
 			CacheData[v.CacheKey.ConfigName] = append(CacheData[v.CacheKey.ConfigName], v.CacheKey.String())
-			CacheData[v.CacheKey.ConfigName] = append(CacheData[v.CacheKey.ConfigName], v.Result.(int))
-			SetData[v.CacheKey.ConfigName][v.CacheKey.String()] = v.Result.(int)
+			CacheData[v.CacheKey.ConfigName] = append(CacheData[v.CacheKey.ConfigName], dbresult)
+			SetData[v.CacheKey.ConfigName][v.CacheKey.String()] = dbresult
 			Keys[v.CacheKey.ConfigName][int64(v.CacheKey.LifeTime)] = append(Keys[v.CacheKey.ConfigName][int64(v.CacheKey.LifeTime)], v.CacheKey.String())
 		}
-	}
-	for _, v := range rcd {
-		if v.CacheKey.Operation == "plus" {
-			if len(PlusData[v.CacheKey.ConfigName]) == 0 {
-				PlusData[v.CacheKey.ConfigName] = map[string]int{}
-			}
-			if PlusData[v.CacheKey.ConfigName][v.CacheKey.String()] > 0 {
-				PlusData[v.CacheKey.ConfigName][v.CacheKey.String()] += v.Result.(int)
-			} else {
-				if SetData[v.CacheKey.ConfigName][v.CacheKey.String()] > 0 {
-					PlusData[v.CacheKey.ConfigName][v.CacheKey.String()] = SetData[v.CacheKey.ConfigName][v.CacheKey.String()] + v.Result.(int)
-				} else {
-					PlusData[v.CacheKey.ConfigName][v.CacheKey.String()] = v.Result.(int)
-				}
-			}
-		}
-		if v.CacheKey.Operation == "reduce" {
-			if len(ReduceData[v.CacheKey.ConfigName]) == 0 {
-				ReduceData[v.CacheKey.ConfigName] = map[string]int{}
-			}
-			if ReduceData[v.CacheKey.ConfigName][v.CacheKey.String()] > 0 {
-				ReduceData[v.CacheKey.ConfigName][v.CacheKey.String()] += v.Result.(int)
-			} else {
-				if SetData[v.CacheKey.ConfigName][v.CacheKey.String()] > 0 {
-					ReduceData[v.CacheKey.ConfigName][v.CacheKey.String()] = SetData[v.CacheKey.ConfigName][v.CacheKey.String()] + v.Result.(int)
-				} else {
-					ReduceData[v.CacheKey.ConfigName][v.CacheKey.String()] = v.Result.(int)
-				}
-			}
-		}
+
 	}
 	if len(CacheData) > 0 {
 		for key, val := range CacheData {
@@ -75,14 +70,26 @@ func (real *TotalReal) SetCacheData(rcd []RealCacheData) {
 			}
 		}
 	}
+	_, falseCk := ExistsMulti(ck)
 	if len(PlusData) > 0 {
 		for key, val := range PlusData {
-			redis.GetInstance(key).IncrByMulti(val)
+			for _, v := range falseCk {
+				delete(val, v.String())
+			}
+			if len(val) > 0 {
+				fmt.Println(val)
+				redis.GetInstance(key).IncrByMulti(val)
+			}
 		}
 	}
 	if len(ReduceData) > 0 {
 		for key, val := range ReduceData {
-			redis.GetInstance(key).DecrByMulti(val)
+			for _, v := range falseCk {
+				delete(val, v.String())
+			}
+			if len(val) > 0 {
+				redis.GetInstance(key).DecrByMulti(val)
+			}
 		}
 	}
 	if len(DelData) > 0 {
@@ -154,8 +161,7 @@ func (real *TotalReal) DelCacheData(dck []CacheKey) {
 }
 func (real *TotalReal) DbToCache(md *ModelData) []RealCacheData {
 	var result []RealCacheData
-	ck := GetCache().typeCacheKey(CacheTypeField, md.Model)
-	mddb := md.Model.DbToCache(md, ck)
+	mddb := md.Model.DbToCache(md, CacheTypeTotal)
 	if len(mddb.SaveData) > 0 {
 		tmp := real.SetDataCacheKey(RemoveDuplicateCacheKey(mddb.SaveData)).GetRealData()
 		result = append(result, tmp...)
