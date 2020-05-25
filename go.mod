@@ -1,4 +1,4 @@
-module github.com/qingfenghuohu/data
+module github.com/qingfenghuohu/dao
 
 go 1.12
 
