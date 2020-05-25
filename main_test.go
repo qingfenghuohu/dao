@@ -2,7 +2,6 @@ package dao
 
 import (
 	"fmt"
-	"github.com/qingfenghuohu/tools"
 	"strconv"
 	"testing"
 	"time"
@@ -10,15 +9,18 @@ import (
 
 func TestModel3(t *testing.T) {
 	UserProduct := UserProduct{}
+
+	res, err := Decr(CreateCacheKey(&UserProduct, UserProductModelDataCacheKeyIntegral, "1", "2"), 1)
+	fmt.Println(res, err)
 	//Model(&UserProduct).Where("id = 1").Del()
 
-	UserProduct.Type = 1
-	UserProduct.Uid = 1
-	UserProduct.Pid = tools.MtRand(1, 10000)
-	UserProduct.Val = tools.MtRand(100, 10000)
+	//UserProduct.Type = 1
+	//UserProduct.Uid = 1
+	//UserProduct.Pid = tools.MtRand(1, 10000)
+	//UserProduct.Val = tools.MtRand(100, 10000)
 	//Model(&UserProduct).Where("id = 1").Save(&UserProduct)
 
-	Model(&UserProduct).Add(&UserProduct)
+	//Model(&UserProduct).Add(&UserProduct)
 	//Product := Product{}
 	//result := GetCache().
 	//Add(&Product, CacheTypeIds, "1").
