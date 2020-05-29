@@ -247,7 +247,6 @@ func (m *m) Save(data interface{}) bool {
 					tmpData[ii] = vv.(string)
 				}
 			}
-			fmt.Println("tmpData", mData)
 			md.SetData(v, tmpData)
 		}
 		SaveCache(md)

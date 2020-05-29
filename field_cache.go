@@ -79,9 +79,16 @@ func (real *FieldReal) GetRealData() []RealCacheData {
 				}
 			}
 			if len(tmp) > 0 && len(tmp1) > 0 {
+				model := Model(val.Model)
 				sql := strings.Join(tmp, " and ")
+				if sql != "" && len(tmp1) > 0 {
+					model = model.Where(sql, tmp1...)
+				}
+				if val.DefaultOrder != "" {
+					model = model.OrderBy(val.DefaultOrder)
+				}
 				res.CacheKey = val
-				res.Result = Model(val.Model).Where(sql, tmp1...).Select()
+				res.Result = model.Select()
 				result.Append(res)
 			}
 			result.Done()

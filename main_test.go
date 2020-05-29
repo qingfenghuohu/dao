@@ -21,12 +21,12 @@ func TestModel3(t *testing.T) {
 	//Model(&UserProduct).Where("id = 1").Save(&UserProduct)
 
 	//Model(&UserProduct).Add(&UserProduct)
-	//Product := Product{}
-	//result := GetCache().
-	//Add(&Product, CacheTypeIds, "1").
-	//Add(&UserProduct, UserProductModelDataCacheKeyUidTotal, "1").
-	//Add(&UserProduct, UserProductModelDataCacheKeyIntegral, "1", "3").
-	//GetData()
+	Product := Product{}
+	result := GetCache().
+		Add(&Product, CacheTypeIds, "1").
+		Add(&UserProduct, UserProductModelDataCacheKeyUidTotal, "1").
+		Add(&UserProduct, UserProductModelDataCacheKeyIntegral, "1", "3").
+		GetData()
 	//fmt.Println(result.Read(&Product, CacheTypeIds, "1").Map())
 	//res := result.Read(&UserProduct, UserProductModelDataCacheKeyIntegral, "1", "3").Int()
 	//fmt.Println(res)

@@ -28,20 +28,21 @@ type Cache interface {
 }
 
 type CacheKey struct {
-	Key        string
-	CType      string
-	Model      ModelInfo
-	Params     []string
-	LifeTime   int
-	ResetTime  int
-	ResetCount int
-	Version    int
-	RelField   []string
-	ResField   []string
-	ResetType  int //0=重建,1=删除
-	ConfigName string
-	Operation  string
-	DefaultVal interface{}
+	Key          string
+	CType        string
+	Model        ModelInfo
+	Params       []string
+	LifeTime     int
+	ResetTime    int
+	ResetCount   int
+	Version      int
+	RelField     []string
+	ResField     []string
+	ResetType    int //0=重建,1=删除
+	ConfigName   string
+	Operation    string
+	DefaultVal   interface{}
+	DefaultOrder string
 }
 
 type ListCacheKey struct {
