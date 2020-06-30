@@ -80,6 +80,10 @@ func (real *RelReal) GetRealData() []RealCacheData {
 		}(key, val, &result)
 	}
 	result.Wait()
+	for _, v := range real.dck {
+		v.Params = []string{"", ""}
+		result.Append(RealCacheData{CacheKey: v, Result: ""})
+	}
 	return result.Data
 }
 func (real *RelReal) SetDataCacheKey(dck []CacheKey) Cache {
