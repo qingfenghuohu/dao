@@ -59,13 +59,12 @@ func (r *Result) Read(model ModelInfo, key string, params ...string) resultInfo 
 		}
 		result.data = res
 	}
-	result.key = k.String()
 	return result
 }
 
 func (r *Result) Exist(model ModelInfo, key string, params ...string) bool {
-	k := CreateCacheKey(model, key, params...).String()
-	_, result := r.data[k]
+	k := CreateCacheKey(model, key, params...)
+	_, result := r.data.Load(k.String())
 	return result
 }
 
