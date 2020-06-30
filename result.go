@@ -13,7 +13,6 @@ type Result struct {
 	WaitGroup sync.WaitGroup
 }
 type resultInfo struct {
-	key  string
 	data interface{}
 }
 
@@ -92,8 +91,9 @@ func (r resultInfo) String() string {
 	return r.data.(string)
 }
 
-func (r resultInfo) Exist() bool {
-	_, result := r.data[r.key]
+func (r resultInfo) Exist(model ModelInfo, key string, params ...string) bool {
+	k := CreateCacheKey(model, key, params...).String()
+	_, result := r.data[k]
 	return result
 }
 
