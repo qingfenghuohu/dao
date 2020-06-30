@@ -63,6 +63,12 @@ func (r *Result) Read(model ModelInfo, key string, params ...string) resultInfo 
 	return result
 }
 
+func (r *Result) Exist(model ModelInfo, key string, params ...string) bool {
+	k := CreateCacheKey(model, key, params...).String()
+	_, result := r.data[k]
+	return result
+}
+
 func (r resultInfo) SliceMap() []map[string]string {
 	result := []map[string]string{}
 	for _, val := range r.data.([]map[string]interface{}) {
@@ -89,12 +95,6 @@ func (r resultInfo) Map() map[string]string {
 
 func (r resultInfo) String() string {
 	return r.data.(string)
-}
-
-func (r resultInfo) Exist(model ModelInfo, key string, params ...string) bool {
-	k := CreateCacheKey(model, key, params...).String()
-	_, result := r.data[k]
-	return result
 }
 
 func (r resultInfo) Int() int {
