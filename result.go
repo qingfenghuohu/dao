@@ -13,6 +13,7 @@ type Result struct {
 	WaitGroup sync.WaitGroup
 }
 type resultInfo struct {
+	key  string
 	data interface{}
 }
 
@@ -59,6 +60,7 @@ func (r *Result) Read(model ModelInfo, key string, params ...string) resultInfo 
 		}
 		result.data = res
 	}
+	result.key = k.String()
 	return result
 }
 
@@ -88,6 +90,11 @@ func (r resultInfo) Map() map[string]string {
 
 func (r resultInfo) String() string {
 	return r.data.(string)
+}
+
+func (r resultInfo) Exist() bool {
+	_, result := r.data[r.key]
+	return result
 }
 
 func (r resultInfo) Int() int {
