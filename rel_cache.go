@@ -112,11 +112,15 @@ func (real *RelReal) DelCacheData(dck []CacheKey) {
 	}
 }
 func (real *RelReal) GetCacheKey(key *CacheKey) string {
-	return strconv.Itoa(key.Version) + ":" +
+	var result string
+	result = strconv.Itoa(key.Version) + ":" +
 		key.CType + ":" +
 		key.Model.MicroName() + "." + key.Model.DbName() + "." + key.Model.TableName() + ":" +
-		key.Key + ":" +
-		key.Params[0]
+		key.Key + ":"
+	if key.Params[0] != "" {
+		result += key.Params[0]
+	}
+	return result
 }
 func (real *RelReal) DbToCache(md *ModelData) []RealCacheData {
 	var result []RealCacheData
