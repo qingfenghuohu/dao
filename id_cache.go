@@ -121,11 +121,15 @@ func (real *IdReal) DbToCache(md *ModelData) []RealCacheData {
 		if md.Operation == "del" {
 			val.AfterData = val.BeData
 		}
+		res := []map[string]interface{}{}
+		res = append(res, val.AfterData)
 		id := val.AfterData[pk].(string)
 		rcd := RealCacheData{}
 		rcd.CacheKey = CreateCacheKey(md.Model, CacheTypeIds, id)
 		rcd.CacheKey.SetOperation(md.Operation)
+		rcd.Result = res
 		result.Data = append(result.Data, rcd)
 	}
+
 	return result.Data
 }

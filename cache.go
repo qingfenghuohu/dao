@@ -305,6 +305,9 @@ func (ld *ListCacheKey) operationCacheKey(data []CacheKey) map[string][]CacheKey
 }
 func resField(field []string, data interface{}) []map[string]interface{} {
 	result := []map[string]interface{}{}
+	if data == nil {
+		return result
+	}
 	d := data.([]map[string]interface{})
 	if len(field) == 0 {
 		return d
