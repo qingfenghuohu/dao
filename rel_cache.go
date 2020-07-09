@@ -99,15 +99,14 @@ func (real *RelReal) DelCacheData(dck []CacheKey) {
 		keys[v.ConfigName] = append(keys[v.ConfigName], v)
 	}
 	for key, val := range keys {
-		data := []interface{}{}
+		ddel := []map[string][]string{}
 		for _, v := range val {
 			if v.Params[1] != "" {
-				data = append(data, v.GetCacheKey())
-				data = append(data, v.Params[1])
+				ddel = append(ddel, map[string][]string{v.GetCacheKey(): []string{v.Params[1]}})
 			}
 		}
-		if len(data) > 0 {
-			redis.GetInstance(key).HMDel(data)
+		if len(ddel) > 0 {
+			redis.GetInstance(key).HDelMulti(ddel)
 		}
 	}
 }

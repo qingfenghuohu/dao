@@ -61,7 +61,7 @@ func ExistsMulti(ck []CacheKey) ([]CacheKey, []CacheKey) {
 	}
 	for k, v := range keys {
 		vv := tools.RemoveDuplicateElement(v)
-		tmp := redis.GetInstance(k).ExistsMulti(vv)
+		tmp := redis.GetInstance(k).ExistsMulti(vv...)
 		for _, val := range ck {
 			key := ""
 			if val.CType == CacheTypeRelation {

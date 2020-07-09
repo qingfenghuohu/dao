@@ -148,10 +148,10 @@ func (real *TotalReal) GetCacheKey(key *CacheKey) string {
 	return key.String()
 }
 func (real *TotalReal) DelCacheData(dck []CacheKey) {
-	keys := map[string][]interface{}{}
+	keys := map[string][]string{}
 	for _, v := range dck {
 		if len(keys[v.ConfigName]) == 0 {
-			keys[v.ConfigName] = []interface{}{}
+			keys[v.ConfigName] = []string{}
 		}
 		keys[v.ConfigName] = append(keys[v.ConfigName], v.String())
 	}
