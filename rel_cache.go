@@ -1,6 +1,7 @@
 package dao
 
 import (
+	"fmt"
 	"github.com/qingfenghuohu/tools/redis"
 	"strconv"
 )
@@ -10,16 +11,19 @@ type RelReal struct {
 }
 
 func (real *RelReal) SetCacheData(rcd []RealCacheData) {
+	fmt.Println("SetCacheData", rcd)
 	Keys := map[string][]redis.HMSMD{}
 	for _, v := range rcd {
-		Hmsmd := redis.HMSMD{}
-		if len(Keys[v.CacheKey.ConfigName]) == 0 {
-			Keys[v.CacheKey.ConfigName] = []redis.HMSMD{}
+		if v.CacheKey.Params[0] != "" || v.CacheKey.Params[1] != "" {
+			Hmsmd := redis.HMSMD{}
+			if len(Keys[v.CacheKey.ConfigName]) == 0 {
+				Keys[v.CacheKey.ConfigName] = []redis.HMSMD{}
+			}
+			Hmsmd.Key = v.CacheKey.GetCacheKey()
+			Hmsmd.Data = map[string]interface{}{v.CacheKey.Params[1]: v.Result}
+			Hmsmd.Ttl = v.CacheKey.LifeTime
+			Keys[v.CacheKey.ConfigName] = append(Keys[v.CacheKey.ConfigName], Hmsmd)
 		}
-		Hmsmd.Key = v.CacheKey.GetCacheKey()
-		Hmsmd.Data = map[string]interface{}{v.CacheKey.Params[1]: v.Result}
-		Hmsmd.Ttl = v.CacheKey.LifeTime
-		Keys[v.CacheKey.ConfigName] = append(Keys[v.CacheKey.ConfigName], Hmsmd)
 	}
 	for key, val := range Keys {
 		redis.GetInstance(key).HMSetMulti(val)
@@ -38,25 +42,17 @@ func (real *RelReal) GetCacheData(res *Result) {
 			Keys[v.ConfigName][v.GetCacheKey()] = append(Keys[v.ConfigName][v.GetCacheKey()], v.Params[1])
 		}
 	}
-	GetKeys := map[string]int{}
-	GetField := map[string]int{}
 	for k, v := range Keys {
 		tmp := redis.GetInstance(k).HMGetMulti(v)
 		for key, val := range tmp {
-			GetKeys[key] = 1
 			for kk, vv := range val {
-				GetField[key+"_"+kk] = 1
 				res.write(key+"_"+kk, vv)
 			}
 		}
 	}
-	for _, v := range real.dck {
-		if GetKeys[v.GetCacheKey()] == 1 && GetField[v.String()] != 1 {
-			res.write(v.String(), v.DefaultVal)
-		}
-	}
 }
 func (real *RelReal) GetRealData() []RealCacheData {
+	fmt.Println("GetRealData", real.dck)
 	var result RealData
 	dataCacheKey := map[string]map[string][]CacheKey{}
 	models := map[string]ModelInfo{}
