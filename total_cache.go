@@ -1,7 +1,6 @@
 package dao
 
 import (
-	"fmt"
 	"github.com/qingfenghuohu/tools"
 	"github.com/qingfenghuohu/tools/redis"
 	"strconv"
@@ -77,7 +76,6 @@ func (real *TotalReal) SetCacheData(rcd []RealCacheData) {
 				delete(val, v.String())
 			}
 			if len(val) > 0 {
-				fmt.Println(val)
 				redis.GetInstance(key).IncrByMulti(val)
 			}
 		}

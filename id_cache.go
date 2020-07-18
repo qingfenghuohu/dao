@@ -2,6 +2,7 @@ package dao
 
 import (
 	"fmt"
+	"github.com/qingfenghuohu/tools"
 	"github.com/qingfenghuohu/tools/redis"
 	"strings"
 	"time"
@@ -74,7 +75,8 @@ func (real *IdReal) GetRealData() []RealCacheData {
 		}
 	}
 	for i, v := range realData {
-		param := strings.Join(realParams[i], ",")
+		tmpIds := tools.RemoveDuplicateElement(realParams[i])
+		param := strings.Join(tmpIds, ",")
 		m := Model(v.Model).InitField()
 		if m.pk == "" {
 			m.pk = "Id"

@@ -1,7 +1,6 @@
 package dao
 
 import (
-	"fmt"
 	"github.com/qingfenghuohu/tools/redis"
 	"strconv"
 )
@@ -11,7 +10,6 @@ type RelReal struct {
 }
 
 func (real *RelReal) SetCacheData(rcd []RealCacheData) {
-	fmt.Println("SetCacheData", rcd)
 	Keys := map[string][]redis.HMSMD{}
 	for _, v := range rcd {
 		if v.CacheKey.Params[0] != "" || v.CacheKey.Params[1] != "" {
@@ -52,7 +50,6 @@ func (real *RelReal) GetCacheData(res *Result) {
 	}
 }
 func (real *RelReal) GetRealData() []RealCacheData {
-	fmt.Println("GetRealData", real.dck)
 	var result RealData
 	dataCacheKey := map[string]map[string][]CacheKey{}
 	models := map[string]ModelInfo{}

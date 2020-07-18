@@ -1,12 +1,10 @@
 package dao
 
 import (
-	"fmt"
 	"github.com/qingfenghuohu/tools"
 	"strconv"
 	"strings"
 	"sync"
-	"time"
 )
 
 const (
@@ -67,7 +65,6 @@ type TypeRealData struct {
 }
 
 func ReBuild(resetKey []CacheKey) []RealCacheData {
-	t := time.Now()
 	var result RealData
 	typeResetKey := GetTypeDataCacheKey(resetKey)
 	//获取真实数据
@@ -83,8 +80,6 @@ func ReBuild(resetKey []CacheKey) []RealCacheData {
 		}(key, val, &result)
 	}
 	result.Wait()
-	elapsed := time.Since(t)
-	fmt.Println("ReBuild:", elapsed)
 	return result.Data
 }
 
@@ -144,7 +139,6 @@ func GetCacheKey(m ModelInfo, key string, p ...string) CacheKey {
 	return result
 }
 func GetData(configKey []CacheKey) Result {
-	t := time.Now()
 	configKey = RemoveDuplicateCacheKey(configKey)
 	//获取全部缓存数据
 	AllData, resetKey := getCache(configKey)
@@ -155,8 +149,6 @@ func GetData(configKey []CacheKey) Result {
 			AllData.write(v.CacheKey.String(), v.Result)
 		}
 	}
-	elapsed := time.Since(t)
-	fmt.Println("GetData:", elapsed)
 	return AllData
 }
 
